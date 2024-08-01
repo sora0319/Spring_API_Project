@@ -4,18 +4,72 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.demo.comentoStatistic.dao.StatisticMapper">
-
+    <!--연도별 접속자 수 -->
     <select id="selectYearLogin" parameterType="string" resultType="YearCountDto">
         select concat('20', #{year}) as year, count(*) as totCnt
         from statistic8.requestInfo ri
         where left(ri.createDate, 2) = #{year};
     </select>
 
-
+    <!--연도별 월별 접속자 수 -->
     <select id="selectYearMonthLogin" parameterType="string" resultType="YearMonthCountDto">
         select concat('20', #{yearMonth}) as yearMonth, count(*) as totCnt
         from statistic8.requestInfo ri
         where left(ri.createDate, 4) = #{yearMonth};
     </select>
 
+    <!-- 월별 접속자 수-->
+    <select id="selectMonthLogin" parameterType="int" resultType="MonthCountDto">
+        select #{month} as month, count(*) as totCnt
+        from statistic8.requestInfo ri
+        where CAST(SUBSTRING(ri.createDate, 3, 2) AS INT) = #{month};
+    </select>
+
+    <!-- 일자별 접속자 수-->
+    <select id="selectDateLogin" parameterType="int" resultType="DateCountDto">
+        SELECT #{date} as date, COUNT(*) as totCnt
+        FROM statistic8.requestInfo ri
+        WHERE CAST(SUBSTRING(ri.createDate, 5, 2) AS INT) = #{date};
+    </select>
+
+    <!-- 평균 하루 로그인 수-->
+    <select id="selectDateAverageLogin" resultType="DateAverageDto">
+        SELECT AVG(dateCount) as averageLogin
+        FROM (SELECT COUNT(*) as dateCount
+              from statistic8.requestInfo ri
+              where ri.requestCode ='O'
+              GROUP BY SUBSTRING(ri.createDate,5,2)
+             ) as loginDate;
+    </select>
+
+    <!-- 부서별 월별 로그인 수-->
+    <select id="selectOrganMonthLogin" parameterType="map" resultType="OrganMonthDto">
+        SELECT #{organ} as organ, #{month} as month, COUNT(*) as totCnt
+        from (
+            SELECT u.HR_ORGAN as department, SUBSTRING(ri.createDate, 3, 2) as monthLogin
+            FROM statistic8.`user` u
+            INNER JOIN statistic8.requestInfo ri ON u.userID = ri.userID
+            where ri.requestCode ='O'
+            GROUP BY u.HR_ORGAN,  SUBSTRING(ri.createDate, 3, 2)
+            ) as monthList
+        where monthList.department =#{organ} AND monthList.monthLogin = #{month};
+    </select>
+
+    <!-- 휴일을 제외한 로그인 수-->
+    <select id="selectWeekdayLogin" resultType="WeekdayCountDto">
+        <![CDATA[
+            SELECT 'weekday' as DayoftheWeek, COUNT(*) as totCnt
+            FROM statistic8.requestInfo ri
+            WHERE ri.createDate NOT IN (
+            SELECT  ri.createDate
+            FROM
+            (SELECT CONCAT(SUBSTRING(h.year, 3,2),
+            IF(h.month <= 9, CONCAT('0', h.month), h.month),
+            IF(h.date <= 9, CONCAT('0',h.date), h.date)) as holidayDate
+            FROM statistic8.holiday h ) as holidayList,
+            statistic8.requestInfo ri
+            WHERE CAST(SUBSTRING(ri.createDate,1,6) AS INT) = CAST(holidayList.holidayDate AS INT)
+            );
+        ]]>
+    </select>
 </mapper>
