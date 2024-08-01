@@ -1,10 +1,11 @@
 package com.demo.comentoStatistic.service;
 
 import com.demo.comentoStatistic.dao.StatisticMapper;
-import com.demo.comentoStatistic.dto.YearCountDto;
-import com.demo.comentoStatistic.dto.YearMonthCountDto;
+import com.demo.comentoStatistic.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 public class StatisticService {
@@ -23,6 +24,29 @@ public class StatisticService {
         return statisticMapper.selectYearMonthLogin(year+month);
     }
 
+    public MonthCountDto getMonthLogins(int month){
 
+        return statisticMapper.selectMonthLogin(month);
+    }
+
+    public DateCountDto getDateLogins(int date){
+
+        return statisticMapper.selectDateLogin(date);
+    }
+
+    public DateAverageDto getDateAverageLogins(){
+
+        return statisticMapper.selectDateAverageLogin();
+    }
+
+    public OrganMonthDto getOrganMonthLogins(Map<String, Object> params){
+
+        return statisticMapper.selectOrganMonthLogin(params);
+    }
+
+    public WeekdayCountDto getWeekdayLogins(){
+
+        return statisticMapper.selectWeekdayLogin();
+    }
 
 }
